@@ -1,3 +1,4 @@
 .kube
 justfile_teachers
 deployment_teachers
+/api/database
