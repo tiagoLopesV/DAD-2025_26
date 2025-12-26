@@ -17,14 +17,16 @@ class RegisterController extends Controller
             'password' => 'required|string|min:3|confirmed',
         ]);
 
-        $user = User::create([
-            'name' => $validated['name'],
-            'nickname' => $validated['nickname'],
-            'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
-            'type' => 'P',
-            'coins_balance' => 10, // welcome bonus
-        ]);
+$user = User::create([
+    'name' => $validated['name'],
+    'nickname' => $validated['nickname'],
+    'email' => $validated['email'],
+    'password' => Hash::make($validated['password']),
+    'type' => 'P',
+    'coins_balance' => 10,
+    'photo_avatar_filename' => 'anonymous.png', // default
+]);
+
 
         $token = $user->createToken('auth-token')->plainTextToken;
 
