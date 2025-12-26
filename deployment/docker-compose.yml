@@ -1,0 +1,78 @@
+# version: "3.9"
+
+services:
+  # -------------------------
+  # MySQL Database
+  # -------------------------
+  db:
+    image: mysql:8.0
+    container_name: bisca-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: bisca
+      MYSQL_USER: bisca_user
+      MYSQL_PASSWORD: bisca_pass
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+  # -------------------------
+  # Laravel Backend
+  # -------------------------
+  laravel:
+    build:
+      context: ../
+      dockerfile: deployment/DockerfileLaravel
+    container_name: bisca-laravel
+    restart: unless-stopped
+    env_file:
+      - ../api/.env
+    depends_on:
+      - db
+    ports:
+      - "8000:8000"  # backend API
+    volumes:
+      - ../:/var/www/html
+    command: sh -c "php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=8000"
+
+  # -------------------------
+  # Vue Frontend
+  # -------------------------
+  vue:
+    build:
+      context: ../
+      dockerfile: deployment/DockerfileVue
+    container_name: bisca-vue
+    restart: unless-stopped
+    depends_on:
+      - laravel
+    ports:
+      - "8080:8080" # SPA dev server
+    volumes:
+      - ../:/app
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+
+  # -------------------------
+  # WebSocket Server
+  # -------------------------
+  ws:
+    build:
+      context: ../
+      dockerfile: deployment/DockerfileWS
+    container_name: bisca-ws
+    restart: unless-stopped
+    depends_on:
+      - laravel
+    ports:
+      - "6001:6001"
+    volumes:
+      - ../:/app
+    command: sh -c "npm install && node server.js"
+
+# -------------------------
+# Volumes
+# -------------------------
+volumes:
+  db_data:
