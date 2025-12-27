@@ -13,7 +13,12 @@ console.log('[main.js] ws connection', wsConnection)
 
 const app = createApp(App)
 
-app.provide('socket', io(wsConnection))
+const socket = io(wsConnection, {
+  withCredentials: true,
+  transports: ['websocket'], // optional, skips polling
+})
+
+app.provide('socket', socket)
 app.provide('serverBaseURL', `http://${apiDomain}`)
 app.provide('apiBaseURL', `http://${apiDomain}/api`)
 
