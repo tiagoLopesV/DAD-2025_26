@@ -4,6 +4,9 @@ import { useAuthStore } from '@/stores/auth';
 import { useRouter } from 'vue-router';
 import { toast } from 'vue-sonner';
 
+// Import CoinWallet component
+import CoinWallet from '@/components/economy/CoinWallet.vue';
+
 const authStore = useAuthStore();
 const router = useRouter();
 
@@ -65,7 +68,6 @@ const updateProfile = async () => {
   }
 }
 
-
 const deleteAccount = async () => {
   if (!deletePassword.value) return toast.error('Password is required');
 
@@ -116,10 +118,14 @@ const handlePhotoChange = (e) => {
     <div class="flex flex-col gap-2">
       <div><strong>Type:</strong> {{ readonlyFields.type }}</div>
       <div><strong>Blocked:</strong> {{ readonlyFields.blocked ? 'Yes' : 'No' }}</div>
-      <div><strong>Coins Balance:</strong> {{ readonlyFields.coins_balance }}</div>
       <div><strong>Deleted At:</strong> {{ readonlyFields.deleted_at || 'Not deleted' }}</div>
       <div><strong>Custom:</strong> {{ readonlyFields.custom }}</div>
     </div>
+
+    <hr class="my-4" />
+
+    <!-- Coin Wallet Component -->
+    <CoinWallet />
 
     <hr class="my-4" />
 
