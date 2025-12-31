@@ -8,7 +8,9 @@ export const server = {
 export const serverStart = (port) => {
   server.io = new Server(port, {
     cors: {
-      origin: "*",
+      origin: "http://localhost:5173", // your Vite frontend
+      methods: ["GET", "POST"],
+      credentials: true, // allow cookies / headers
     },
   });
   server.io.on("connection", (socket) => {
