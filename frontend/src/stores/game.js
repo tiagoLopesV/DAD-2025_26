@@ -10,7 +10,7 @@ export const useGameStore = defineStore('game', () => {
   // --- ESTADO ---
   const gameType = ref('3') 
   const myHand = ref([])
-  const cpuHand = ref([])
+  const botHand = ref([])
   const cardsOnTable = ref([])
   const trump = ref(null)
   const deck = ref([])
@@ -19,20 +19,23 @@ export const useGameStore = defineStore('game', () => {
   const myTurn = ref(true)
   const leaderThisTrick = ref(true) 
   const isResolving = ref(false)
-  const lastWinner = ref(null) // 1 = Tu, 2 = CPU
+  const lastWinner = ref(null) // 1 = Tu, 2 = BOT
+  const gameMode = ref('game') // 'game' ou 'match'
+  const isGameComplete = ref(false)
 
   // --- COMPUTED ---
   const isDeckEmpty = computed(() => deck.value.length === 0)
   const deckCount = computed(() => deck.value.length)
-  const opponentCardCount = computed(() => cpuHand.value.length)
+  const opponentCardCount = computed(() => botHand.value.length)
   const isMatchOver = computed(() => player1.value.marks >= 4 || player2.value.marks >= 4)
 
   // --- AUXILIARES ---
   const canFollowSuit = (hand, suit) => hand.some(c => c.suit === suit)
 
   // --- AÇÕES ---
-  const prepareNewGame = (variant = '9') => {
+  const prepareNewGame = (variant = '3', mode = 'game') => {
     gameType.value = variant
+    gameMode.value = mode
     const suits = ['hearts', 'diamonds', 'spades', 'clubs']
     const values = ['A', '2', '3', '4', '5', '6', '7', 'J', 'Q', 'K']
     
@@ -48,15 +51,19 @@ export const useGameStore = defineStore('game', () => {
 
     const count = parseInt(gameType.value)
     myHand.value = deck.value.splice(-count).map(c => ({ ...c, flipped: true }))
-    cpuHand.value = deck.value.splice(-count).map(c => ({ ...c, flipped: false }))
+    botHand.value = deck.value.splice(-count).map(c => ({ ...c, flipped: false }))
     
     player1.value.points = 0
     player2.value.points = 0
+    if (mode === 'game') {
+      player1.value.marks = 0
+      player2.value.marks = 0
+    }
     cardsOnTable.value = []
     isResolving.value = false
     lastWinner.value = null
 
-    if (!myTurn.value) _playBotMove()
+    if (!myTurn.value) playBotMove()
   }
 
   const playCard = (card) => {
@@ -77,13 +84,13 @@ export const useGameStore = defineStore('game', () => {
       if (cardsOnTable.value.length === 0) leaderThisTrick.value = true
       cardsOnTable.value.push(played)
       
-      if (cardsOnTable.value.length === 2) _resolveTrick()
-      else { myTurn.value = false; _playBotMove() }
+      if (cardsOnTable.value.length === 2) resolveTrick()
+      else { myTurn.value = false; playBotMove() }
     }
   }
 
-  const _playBotMove = async () => {
-    if (isResolving.value || cpuHand.value.length === 0) return
+  const playBotMove = async () => {
+    if (isResolving.value || botHand.value.length === 0) return
     if (cardsOnTable.value.length === 0) {
       leaderThisTrick.value = false
       myTurn.value = false
@@ -96,27 +103,27 @@ export const useGameStore = defineStore('game', () => {
     if (cardsOnTable.value.length === 1) {
       const lead = cardsOnTable.value[0]
       if (isDeckEmpty.value) {
-        cardIndex = cpuHand.value.findIndex(c => c.suit === lead.suit)
-        if (cardIndex === -1) cardIndex = cpuHand.value.findIndex(c => c.suit === tSuit)
+        cardIndex = botHand.value.findIndex(c => c.suit === lead.suit)
+        if (cardIndex === -1) cardIndex = botHand.value.findIndex(c => c.suit === tSuit)
       }
       if (cardIndex === -1) {
-        cardIndex = cpuHand.value.findIndex(c => c.suit === lead.suit && cardPower[c.value] > cardPower[lead.value])
+        cardIndex = botHand.value.findIndex(c => c.suit === lead.suit && cardPower[c.value] > cardPower[lead.value])
         if (cardIndex === -1 && lead.suit !== tSuit && pointsMap[lead.value] > 0) {
-          cardIndex = cpuHand.value.findIndex(c => c.suit === tSuit)
+          cardIndex = botHand.value.findIndex(c => c.suit === tSuit)
         }
       }
     }
     
     if (cardIndex === -1) cardIndex = 0
 
-    const played = cpuHand.value.splice(cardIndex, 1)[0]
+    const played = botHand.value.splice(cardIndex, 1)[0]
     cardsOnTable.value.push(played)
 
-    if (cardsOnTable.value.length === 2) _resolveTrick()
+    if (cardsOnTable.value.length === 2) resolveTrick()
     else myTurn.value = true
   }
 
-  const _resolveTrick = async () => {
+  const resolveTrick = async () => {
     isResolving.value = true
     await new Promise(r => setTimeout(r, 1000))
 
@@ -144,34 +151,49 @@ export const useGameStore = defineStore('game', () => {
 
     cardsOnTable.value = []
     lastWinner.value = null
-    if (!isDeckEmpty.value) _drawCards(playerWonTrick)
+    if (!isDeckEmpty.value) drawCards(playerWonTrick)
 
     isResolving.value = false
-    if (myHand.value.length === 0) _resolveGameEnd()
-    else if (!myTurn.value) _playBotMove()
+    if (myHand.value.length === 0) resolveGameEnd()
+    else if (!myTurn.value) playBotMove()
   }
 
-  const _drawCards = (playerWon) => {
+  const drawCards = (playerWon) => {
     if (playerWon) {
       myHand.value.push({ ...deck.value.pop(), flipped: true })
-      if (deck.value.length > 0) cpuHand.value.push({ ...deck.value.pop(), flipped: false })
+      if (deck.value.length > 0) botHand.value.push({ ...deck.value.pop(), flipped: false })
     } else {
-      cpuHand.value.push({ ...deck.value.pop(), flipped: false })
+      botHand.value.push({ ...deck.value.pop(), flipped: false })
       if (deck.value.length > 0) myHand.value.push({ ...deck.value.pop(), flipped: true })
     }
   }
 
-  const _resolveGameEnd = () => {
+  const resolveGameEnd = () => {
+    // Cálculo de marcas ganhas nesta mão
+    let marksWon = 0
     if (player1.value.points > 60) {
-      const marks = player1.value.points === 120 ? 3 : (player1.value.points >= 91 ? 2 : 1)
-      player1.value.marks += marks
-      toast.success(`You won ${marks} mark(s)!`)
+      marksWon = player1.value.points === 120 ? 3 : (player1.value.points >= 91 ? 2 : 1)
+      player1.value.marks += marksWon
     } else if (player2.value.points > 60) {
-      const marks = player2.value.points === 120 ? 3 : (player2.value.points >= 91 ? 2 : 1)
-      player2.value.marks += marks
-      toast.error(`The CPU won ${marks} mark(s).`)
+      marksWon = player2.value.points === 120 ? 3 : (player2.value.points >= 91 ? 2 : 1)
+      player2.value.marks += marksWon
     }
-    if (!isMatchOver.value) setTimeout(() => prepareNewGame(gameType.value), 2000)
+
+    // Decisão: O jogo acaba aqui ou continua?
+    if (gameMode.value === 'game') {
+      // Jogo Único: Acaba mal a primeira mão termine
+      isGameComplete.value = true
+      // saveGame()
+    } else {
+      // Modo Match: Só acaba quando alguém chega às 4 marcas
+      if (isMatchOver.value) {
+        isGameComplete.value = true
+        // saveGame()
+      } else {
+        toast.info("Preparing next hand...")
+        setTimeout(() => prepareNewGame(gameType.value, 'match'), 3000)
+      }
+    }
   }
 
   const isCardPlayable = (card) => {
@@ -195,8 +217,8 @@ export const useGameStore = defineStore('game', () => {
 };
 
   return {
-    gameType, myHand, cpuHand, cardsOnTable, trump, player1, player2, 
-    myTurn, isResolving, isDeckEmpty, deckCount, opponentCardCount, 
-    isMatchOver, lastWinner, prepareNewGame, playCard, isCardPlayable
+    gameType, myHand, botHand: botHand, cardsOnTable, trump, player1, player2, 
+    myTurn, isResolving, isDeckEmpty, deckCount, opponentCardCount, gameMode,
+    isGameComplete, isMatchOver, lastWinner, prepareNewGame, playCard, isCardPlayable
   }
 })

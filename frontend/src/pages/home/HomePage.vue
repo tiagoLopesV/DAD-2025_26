@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { useRouter } from 'vue-router'
 import { useAPIStore } from '@/stores/api'
 import { useAuthStore } from '@/stores/auth'
@@ -10,10 +11,17 @@ const apiStore = useAPIStore()
 const authStore = useAuthStore()
 
 const selectedVariant = ref('3')
-const highScores = ref([]) // Definido aqui
+const selectedMode = ref('game') // 'game' ou 'match'
+const highScores = ref([])
 
 const startSinglePlayer = () => {
-  router.push({ name: 'singleplayer', query: { variant: selectedVariant.value } })
+  router.push({ 
+    name: 'singleplayer', 
+    query: { 
+      variant: selectedVariant.value,
+      mode: selectedMode.value 
+    } 
+  })
 }
 
 const goToLobby = () => {
@@ -44,28 +52,42 @@ onMounted(async () => {
     </h1>
 
     <div class="flex flex-col lg:flex-row justify-center items-start gap-8">
-      
       <div class="flex flex-col gap-8 w-full max-w-2xl">
         <div class="grid md:grid-cols-2 gap-8">
+          
           <Card class="bg-slate-900 border-slate-700 text-slate-200">
             <CardHeader>
               <CardTitle class="text-2xl font-bold text-white">Singleplayer</CardTitle>
-              <br>
-              <CardDescription>Play against the CPU now</CardDescription>
+              <CardDescription>Play solo against the BOT now</CardDescription>
             </CardHeader>
             <CardContent class="space-y-6">
-              <div class="flex gap-2 p-1 bg-slate-800 rounded-lg">
-                <Button 
-                  v-for="v in ['3', '9']" :key="v"
-                  @click="selectedVariant = v"
-                  size="sm"
-                  class="flex-1 font-bold transition-all"
-                  :variant="selectedVariant === v ? 'default' : 'ghost'"
-                  :class="selectedVariant === v ? 'bg-white text-black' : 'text-slate-400'"
-                >
-                  {{ v }} Cards
-                </Button>
+              <div class="space-y-2">
+                <p class="text-[10px] uppercase font-bold text-slate-500">Cards in Hand</p>
+                <div class="flex gap-2 p-1 bg-slate-800 rounded-lg">
+                  <Button v-for="v in ['3', '9']" :key="v" @click="selectedVariant = v" size="sm" class="flex-1 font-bold"
+                    :variant="selectedVariant === v ? 'default' : 'ghost'"
+                    :class="selectedVariant === v ? 'bg-white text-black' : 'text-slate-400'">
+                    {{ v }} Cards
+                  </Button>
+                </div>
               </div>
+
+              <div class="space-y-2">
+                <p class="text-[10px] uppercase font-bold text-slate-500">Game Type</p>
+                <div class="flex gap-2 p-1 bg-slate-800 rounded-lg">
+                  <Button @click="selectedMode = 'game'" size="sm" class="flex-1 font-bold"
+                    :variant="selectedMode === 'game' ? 'default' : 'ghost'"
+                    :class="selectedMode === 'game' ? 'bg-blue-500 text-white' : 'text-slate-400'">
+                    Single Game
+                  </Button>
+                  <Button @click="selectedMode = 'match'" size="sm" class="flex-1 font-bold"
+                    :variant="selectedMode === 'match' ? 'default' : 'ghost'"
+                    :class="selectedMode === 'match' ? 'bg-blue-500 text-white' : 'text-slate-400'">
+                    Match (4 Marks)
+                  </Button>
+                </div>
+              </div>
+
               <Button @click="startSinglePlayer" size="lg" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-black uppercase">
                 Play Solo
               </Button>
@@ -75,13 +97,12 @@ onMounted(async () => {
           <Card class="bg-emerald-950 border-emerald-800 text-emerald-100">
             <CardHeader>
               <CardTitle class="text-2xl font-bold text-white">Multiplayer</CardTitle>
-              <br>
               <CardDescription>Challenge other players</CardDescription>
             </CardHeader>
             <CardContent class="space-y-6">
               <div v-if="!authStore.user" class="text-center py-4">
                 <p class="text-xs text-emerald-500 mb-4">Log in for online mode</p>
-                <Button @click="router.push('/login')" variant="outline" class="w-full border-emerald-500 text-emerald-500 hover:bg-emerald-500 hover:text-black">
+                <Button @click="router.push('/login')" variant="outline" class="w-full border-emerald-500 text-emerald-500 hover:bg-emerald-500">
                   Login
                 </Button>
               </div>
@@ -92,27 +113,6 @@ onMounted(async () => {
           </Card>
         </div>
       </div>
-
-      <Card class="w-full lg:w-80 bg-slate-50 border-slate-200 shadow-sm">
-        <CardHeader>
-          <CardTitle class="text-xl font-bold flex items-center gap-2">
-            <span>🏆</span> Top 5 Scores
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div v-if="highScores.length > 0" class="space-y-4">
-            <div v-for="(score, index) in highScores" :key="index" class="flex justify-between items-center border-b pb-2 last:border-0">
-              <div>
-                <p class="font-bold text-slate-800 leading-none">{{ score.username }}</p>
-                <p class="text-[10px] text-slate-500">{{ score.date }}</p>
-              </div>
-              <span class="text-lg font-black text-blue-600">{{ score.points }}</span>
-            </div>
-          </div>
-          <p v-else class="text-center text-slate-400 italic py-4">Loading scores...</p>
-        </CardContent>
-      </Card>
-
     </div>
   </div>
 </template>
