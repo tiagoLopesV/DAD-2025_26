@@ -40,21 +40,26 @@ const handleClick = () => {
     <div 
         class="relative w-28 h-40 cursor-pointer rounded-xl transition-all duration-200"
         :class="[
-            disabled ? 'opacity-50 cursor-not-allowed' : 'hover:-translate-y-2 hover:shadow-xl'
+            (disabled && card.flipped) ? 'opacity-50 cursor-not-allowed' : 'opacity-100',
+            !disabled ? 'hover:-translate-y-2 hover:shadow-xl' : ''
         ]"
         @click="handleClick"
     >
         <div v-if="!card.flipped" 
-             class="w-full h-full bg-purple-600 rounded-lg flex items-center justify-center border-4 border-white shadow-lg">
-            <span class="text-4xl text-white font-black opacity-30 italic">?</span>
-        </div>
+     class="w-full h-full bg-white rounded-lg shadow-md overflow-hidden border border-slate-200">
+    <img 
+        src="/img/cards/semFace.png" 
+        class="w-full h-full object-cover" 
+        alt="Card Back"
+    />
+</div>
 
         <div v-else class="w-full h-full bg-white rounded-lg shadow-md overflow-hidden border border-slate-200">
             <img 
                 :src="cardImageUrl" 
                 class="w-full h-full object-contain p-1" 
-                :alt="`Carta ${card.suit} ${card.value}`"
-                @error="(e) => e.target.src = `${serverBaseURL}/img/cards/semFace.png`"
+                :alt="`Card ${card.suit} ${card.value}`"
+                @error="(e) => e.target.src = `/img/cards/semFace.png`"
             />
         </div>
     </div>
