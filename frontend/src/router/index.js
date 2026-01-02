@@ -8,6 +8,8 @@ import RegisterPage from '@/pages/register/RegisterPage.vue'
 import ProfilePage from '@/pages/profile/ProfilePage.vue'
 import LaravelPage from '@/pages/testing/LaravelPage.vue'
 import WebsocketsPage from '@/pages/testing/WebsocketsPage.vue'
+import LeaderboardPage from '@/pages/LeaderboardPage.vue'
+import HistoryPage from '@/pages/HistoryPage.vue'
 
 const routes = [
   { path: '/', name: 'home', component: HomePage },
@@ -28,6 +30,12 @@ const routes = [
       return { name: 'login' }
     },
   },
+  
+  // Public
+  { path: '/leaderboard', name: 'leaderboard', component: LeaderboardPage },
+
+  // Authenticated
+  { path: '/history', name: 'history', component: HistoryPage, meta: { requiresAuth: true } },
 
   // Testing
   {
