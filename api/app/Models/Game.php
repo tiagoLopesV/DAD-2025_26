@@ -10,4 +10,12 @@ class Game extends Model
     {
         return $this->belongsTo(User::class, "winner_user_id");
     }
+
+        protected function casts(): array
+    {
+        return [
+            'began_at' => 'datetime',
+            'ended_at' => 'datetime',
+        ];
+    }
 }
