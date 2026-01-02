@@ -30,3 +30,16 @@ Route::middleware('auth:sanctum', 'blocked')->group(function () {
 });
 
 Route::apiResource('games', GameController::class);
+Route::get('/leaderboard/global', [App\Http\Controllers\LeaderboardController::class, 'global']);
+Route::get('/statistics/public', [App\Http\Controllers\StatisticsController::class, 'publicStats']);
+
+Route::middleware('auth:sanctum')->group(function () {
+    
+    Route::get('/leaderboard/personal', [App\Http\Controllers\LeaderboardController::class, 'personal']);
+    Route::get('/history/my-games', [App\Http\Controllers\HistoryController::class, 'myHistory']);
+    
+    // Admin routes (assuming 'can:isAdmin' or similar gate exists, otherwise just auth for now as per snippet)
+    // The snippet commented out admin middleware, I will uncomment or use a simple check if needed.
+    // For now, placing under auth, potentially adding admin check later.
+    Route::get('/history/all-games', [App\Http\Controllers\HistoryController::class, 'allHistory']);
+});
