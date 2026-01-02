@@ -17,7 +17,6 @@ class StatisticsController extends Controller
         $totalMatches = DB::table('matches')->count(); 
 
         // Recent Activity (last 7 days)
-        // Fetching recent games and aggregating in PHP to avoid SQL compatibility issues (SQLite vs MySQL)
         $endDate = now();
         $startDate = now()->subDays(6)->startOfDay();
 

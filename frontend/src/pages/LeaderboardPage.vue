@@ -79,8 +79,7 @@ onMounted(async () => {
 })
 
 const getAvatar = (filename) => {
-    // Assuming a way to resolve avatar URL, potentially needing absolute path or base URL
-    // existing code in other components might shed light, using a placeholder for now if null
+
     return filename ? `http://localhost:8000/storage/avatars/${filename}` : 'https://placehold.co/40' 
 }
 </script>
