@@ -88,4 +88,12 @@ class Game extends Model
     {
         return $this->belongsTo(GameMatch::class, 'match_id');
     }
+
+        protected function casts(): array
+    {
+        return [
+            'began_at' => 'datetime',
+            'ended_at' => 'datetime',
+        ];
+    }
 }

@@ -57,4 +57,10 @@ class User extends Authenticatable
     public function isAdmin(): bool{
         return $this->type === 'A';
     }
+
+    
+    public function gamesWon()
+    {
+        return $this->hasMany(Game::class, 'winner_user_id');
+    }
 }
