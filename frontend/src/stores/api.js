@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { toast } from 'vue-sonner'
 import axios from 'axios'
 import { inject, ref } from 'vue'
 
@@ -38,6 +39,18 @@ export const useAPIStore = defineStore('api', () => {
   const postRegister = (formData) => axios.post(`${API_BASE_URL}/register`, formData)
 
   // GAMES
+
+  const postGame = async (game) => {
+  try {
+    const response = await axios.post(`${API_BASE_URL}/games`, game)
+    toast.success(`[API] Game saved successfully`)
+    return response
+  } catch (error) {
+    toast.error(`[API] Error saving game - ${error?.response?.data?.message || error.message}`)
+    throw error
+  }
+}
+
   const getGames = (resetPagination = false) => {
     if (resetPagination) gameQueryParameters.value.page = 1
 
@@ -56,12 +69,25 @@ export const useAPIStore = defineStore('api', () => {
     return axios.get(`${API_BASE_URL}/games?${queryParams}`)
   }
 
+  const postMatch = async (match) => {
+  try {
+    const response = await axios.post(`${API_BASE_URL}/matches`, match)
+    toast.success(`[API] Match saved successfully`)
+    return response
+  } catch (error) {
+    toast.error(`[API] Error saving match - ${error?.response?.data?.message || error.message}`)
+    throw error
+  }
+}
+
   return {
     token,
     postLogin,
     postLogout,
     getAuthUser,
+    postGame,
     getGames,
+    postMatch,
     gameQueryParameters,
     postRegister,
     getGlobalLeaderboard: () => axios.get(`${API_BASE_URL}/leaderboard/global`),

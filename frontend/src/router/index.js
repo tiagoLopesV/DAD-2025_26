@@ -8,6 +8,9 @@ import RegisterPage from '@/pages/register/RegisterPage.vue'
 import ProfilePage from '@/pages/profile/ProfilePage.vue'
 import LaravelPage from '@/pages/testing/LaravelPage.vue'
 import WebsocketsPage from '@/pages/testing/WebsocketsPage.vue'
+import MultiplayerLobbyPage from '@/pages/game/MultiplayerLobbyPage.vue'
+import SingleplayerGamePage from '@/pages/game/SingleplayerGamePage.vue'
+import MultiplayerGamePage from '@/pages/game/MultiplayerGamePage.vue'
 import LeaderboardPage from '@/pages/LeaderboardPage.vue'
 import HistoryPage from '@/pages/HistoryPage.vue'
 import StatisticsPage from '@/pages/StatisticsPage.vue'
@@ -58,6 +61,26 @@ const routes = [
       { path: 'laravel', component: LaravelPage },
       { path: 'websockets', component: WebsocketsPage },
     ],
+  },
+
+  //Game
+  {
+    path: '/lobby',
+    name: 'multiplayerlobby',
+    component: MultiplayerLobbyPage,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/multiplayer/:id',
+    name: 'multiplayer',
+    component: MultiplayerGamePage,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/singleplayer/',
+    name: 'singleplayer',
+    component: SingleplayerGamePage,
+    meta: { requiresAuth: false }
   },
 ]
 
