@@ -5,6 +5,7 @@ use App\Http\Controllers\GameController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\CoinController;
+use App\Http\Controllers\AdminController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -42,4 +43,17 @@ Route::middleware('auth:sanctum')->group(function () {
     // The snippet commented out admin middleware, I will uncomment or use a simple check if needed.
     // For now, placing under auth, potentially adding admin check later.
     Route::get('/history/all-games', [App\Http\Controllers\HistoryController::class, 'allHistory']);
+});
+
+Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
+
+    Route::get('/users', [AdminController::class, 'users']);
+    Route::patch('/users/{user}/block', [AdminController::class, 'toggleBlock']);
+    Route::delete('/users/{user}', [AdminController::class, 'deleteUser']);
+
+    Route::post('/admins', [AdminController::class, 'createAdmin']);
+
+    Route::get('/transactions', [AdminController::class, 'transactions']);
+    Route::get('/games', [AdminController::class, 'games']);
+    Route::get('/matches', [AdminController::class, 'matches']);
 });
