@@ -54,7 +54,7 @@ class Game extends Model
      */
     public function player1(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'player1_user_id');
+        return $this->belongsTo(User::class, 'player1_user_id')->withTrashed();
     }
 
     /**
@@ -62,7 +62,7 @@ class Game extends Model
      */
     public function player2(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'player2_user_id');
+        return $this->belongsTo(User::class, 'player2_user_id')->withTrashed();
     }
 
     /**
@@ -70,7 +70,7 @@ class Game extends Model
      */
     public function winner(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'winner_user_id');
+        return $this->belongsTo(User::class, 'winner_user_id')->withTrashed();
     }
 
     /**
@@ -78,7 +78,7 @@ class Game extends Model
      */
     public function loser(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'loser_user_id');
+        return $this->belongsTo(User::class, 'loser_user_id')->withTrashed();
     }
 
     /**

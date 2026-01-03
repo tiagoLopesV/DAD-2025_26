@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\CoinTransaction;
-//use App\Models\Game;
-//use App\Models\Match;
+use App\Models\Game;
+//use App\Models\GameMatch;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -15,7 +15,12 @@ class AdminController extends Controller
     // 1. List all users
     public function users()
     {
-        return User::withTrashed()->get();
+            return User::withTrashed()->get()->map(function($user) {
+                $user->status = $user->deleted_at 
+                ? 'Deleted - ' . $user->deleted_at 
+                : ($user->blocked ? 'Blocked' : 'Active');
+                    return $user;
+    });
     }
 
     // 2. Block / unblock player
@@ -73,7 +78,7 @@ public function deleteUser(User $user)
     if ($hasHistory || $user->isAdmin()) {
         $user->delete(); // soft delete
     } else {
-        $user->forceDelete(); // permanent delete
+        //$user->forceDelete(); // permanent delete
     }
 
     return response()->json(['success' => true]);
@@ -91,7 +96,9 @@ public function deleteUser(User $user)
     // 6. View all games & matches
     public function games()
     {
-        return Game::with(['player1', 'player2'])->get();
+        return Game::with(['player1', 'player2', 'winner', 'loser', 'match'])
+            ->orderByDesc('began_at')
+            ->get();
     }
 
     // public function matches()

@@ -54,7 +54,7 @@ onMounted(async () => {
   // Se o utilizador já estiver logado, tentamos restaurar o perfil 
   // e avisar o servidor socket imediatamente
   if (authStore.token) {
-    await authStore.restoreToken() // Garante que temos o objeto user
+    //await authStore.restoreToken() // Garante que temos o objeto user
     if (authStore.currentUser) {
       socketStore.socket.emit('login', authStore.currentUser)
       // Agora o servidor já sabe quem é o getUser(socket.id)

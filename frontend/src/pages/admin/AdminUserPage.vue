@@ -30,7 +30,6 @@ const filteredUsers = computed(() => {
     })
 })
 
-
 const paginatedUsers = computed(() => {
     const start = (currentPage.value - 1) * perPage.value
     const end = start + perPage.value
@@ -88,19 +87,29 @@ const toggleBlock = async (id) => {
                     <td>{{ u.email }}</td>
                     <td>{{ u.nickname }}</td>
                     <td>{{ u.type === 'A' ? 'Admin' : 'Player' }}</td>
-                    <td>{{ u.blocked ? 'Blocked' : 'Active' }}</td>
+                    <td>
+                        <!-- Show status -->
+                        <span v-if="u.deleted_at">
+                            Deleted - {{ new Date(u.deleted_at).toLocaleString() }}
+                        </span>
+                        <span v-else>
+                            {{ u.blocked ? 'Blocked' : 'Active' }}
+                        </span>
+                    </td>
                     <td class="flex gap-2">
-                        <template v-if="u.deleted_at">
-                            DELETED - {{ new Date(u.deleted_at).toLocaleString() }}
-                        </template>
-                        <template v-else>
-                            <button v-if="u.type === 'P'" @click="toggleBlock(u.id)">
+                        <!-- Actions: hide if deleted -->
+                        <template v-if="!u.deleted_at">
+                            <button v-if="u.type === 'P'" @click="toggleBlock(u.id)" class="px-2 py-1 border rounded">
                                 {{ u.blocked ? 'Unblock' : 'Block' }}
                             </button>
 
-                            <button @click="confirmDelete(u.id)" class="text-red-600">
+                            <button @click="confirmDelete(u.id)" class="text-red-600 px-2 py-1 border rounded">
                                 Delete
                             </button>
+                        </template>
+                        <template v-else>
+                            <!-- Deleted users have no actions -->
+                            <span class="text-gray-400 italic">No actions</span>
                         </template>
                     </td>
                 </tr>
