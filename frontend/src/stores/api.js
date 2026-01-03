@@ -90,5 +90,11 @@ export const useAPIStore = defineStore('api', () => {
     postMatch,
     gameQueryParameters,
     postRegister,
+    getGlobalLeaderboard: () => axios.get(`${API_BASE_URL}/leaderboard/global`),
+    getPersonalLeaderboard: () => axios.get(`${API_BASE_URL}/leaderboard/personal`),
+    getMyHistory: (page = 1) => axios.get(`${API_BASE_URL}/history/my-games?page=${page}`),
+    getAllHistory: (page = 1) => axios.get(`${API_BASE_URL}/history/all-games?page=${page}`),
+    getPublicStatistics: () => axios.get(`${API_BASE_URL}/statistics/public`),
+
   }
 })

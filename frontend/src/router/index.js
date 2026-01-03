@@ -11,6 +11,9 @@ import WebsocketsPage from '@/pages/testing/WebsocketsPage.vue'
 import MultiplayerLobbyPage from '@/pages/game/MultiplayerLobbyPage.vue'
 import SingleplayerGamePage from '@/pages/game/SingleplayerGamePage.vue'
 import MultiplayerGamePage from '@/pages/game/MultiplayerGamePage.vue'
+import LeaderboardPage from '@/pages/LeaderboardPage.vue'
+import HistoryPage from '@/pages/HistoryPage.vue'
+import StatisticsPage from '@/pages/StatisticsPage.vue'
 
 const routes = [
   { path: '/', name: 'home', component: HomePage },
@@ -31,6 +34,13 @@ const routes = [
       return { name: 'login' }
     },
   },
+  
+  // Public
+  { path: '/leaderboard', name: 'leaderboard', component: LeaderboardPage },
+  { path: '/statistics', name: 'statistics', component: StatisticsPage },
+
+  // Authenticated
+  { path: '/history', name: 'history', component: HistoryPage, meta: { requiresAuth: true } },
 
   // Testing
   {

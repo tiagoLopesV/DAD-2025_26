@@ -18,6 +18,26 @@
           </NavigationMenuContent>
         </NavigationMenuItem>
 
+        <!-- Leaderboard Link -->
+        <NavigationMenuItem>
+          <NavigationMenuLink as-child>
+            <RouterLink to="/leaderboard">Leaderboard</RouterLink>
+          </NavigationMenuLink>
+        </NavigationMenuItem>
+          <!-- Statistics Link -->
+        <NavigationMenuItem>
+          <NavigationMenuLink as-child>
+            <RouterLink to="/statistics">Statistics</RouterLink>
+          </NavigationMenuLink>
+        </NavigationMenuItem>
+
+        <!-- History Link (logged-in only) -->
+        <NavigationMenuItem v-if="userLoggedIn">
+          <NavigationMenuLink as-child>
+            <RouterLink to="/history">History</RouterLink>
+          </NavigationMenuLink>
+        </NavigationMenuItem>
+
         <!-- Profile Link (logged-in only) -->
         <NavigationMenuItem v-if="userLoggedIn">
           <NavigationMenuLink as-child>
