@@ -108,6 +108,12 @@ export const useSocketStore = defineStore('socket', () => {
       await saveGame(game, 'Ended')
     }
 
+    console.log('Dados para o Laravel:', {
+        id: game.id,
+        status: 'Ended',
+        winner: game.winner // VERIFICA ISTO NA CONSOLA DO BROWSER
+    });
+
     // 2. Gravar o Match (Isto dispara o Payout no Laravel)
     // GARANTE QUE O WINNER ESTÁ DEFINIDO NO SOCKET SERVER
     await saveMatch(game, 'Ended')
