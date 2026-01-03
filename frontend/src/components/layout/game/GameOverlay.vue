@@ -9,7 +9,7 @@ defineProps(['winnerName', 'isVictory'])
         {{ isVictory ? 'VICTORY!' : 'DEFEAT...' }}
       </h2>
       <p class="text-white text-lg mb-6">
-        {{ isVictory ? 'Congratulations! You won the match.' : `Player ${winnerName} won the 4 marks.` }}
+        {{ isVictory ? 'Congratulations! You won the match.' : `Player ${winnerName} won the game.` }}
       </p>
       <button @click="$router.push('/')" class="w-full bg-white text-black font-bold py-3 rounded-xl hover:bg-slate-200 transition">
         Back to Home
