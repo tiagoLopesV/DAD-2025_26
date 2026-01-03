@@ -43,7 +43,6 @@ export const useAPIStore = defineStore('api', () => {
   const postGame = async (game) => {
   try {
     const response = await axios.post(`${API_BASE_URL}/games`, game)
-    toast.success(`[API] Game saved successfully`)
     return response
   } catch (error) {
     toast.error(`[API] Error saving game - ${error?.response?.data?.message || error.message}`)
@@ -72,7 +71,6 @@ export const useAPIStore = defineStore('api', () => {
   const postMatch = async (match) => {
   try {
     const response = await axios.post(`${API_BASE_URL}/matches`, match)
-    toast.success(`[API] Match saved successfully`)
     return response
   } catch (error) {
     toast.error(`[API] Error saving match - ${error?.response?.data?.message || error.message}`)
