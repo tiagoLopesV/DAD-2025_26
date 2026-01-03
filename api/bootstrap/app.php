@@ -4,6 +4,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use App\Http\Middleware\BlockedUser;
+use App\Http\Middleware\AdminOnly;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -15,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'blocked' => BlockedUser::class,
+            'admin' => AdminOnly::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -58,6 +58,10 @@ class User extends Authenticatable
         return $this->type === 'A';
     }
 
+    public function coinTransactions(){
+        return $this->hasMany(CoinTransaction::class);
+    }
+
     
     public function gamesWon()
     {
