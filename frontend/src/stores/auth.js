@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import axios from 'axios'
 import { ref, computed } from 'vue'
 import { useAPIStore } from './api'
+import { useSocketStore } from './socket'
 
 // Hardcoded backend URL
 const API_BASE_URL = 'http://localhost:8000'
@@ -11,6 +12,8 @@ axios.defaults.baseURL = API_BASE_URL
 
 export const useAuthStore = defineStore('auth', () => {
   const apiStore = useAPIStore()
+  const socketStore = useSocketStore() 
+
   const currentUser = ref(undefined)
 
   const isLoggedIn = computed(() => currentUser.value !== undefined)
@@ -25,6 +28,7 @@ export const useAuthStore = defineStore('auth', () => {
     // Fetch current user
     const userResponse = await apiStore.getAuthUser()
     currentUser.value = userResponse.data
+    socketStore.emitJoin(currentUser.value)
     return userResponse.data
   }
 

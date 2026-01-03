@@ -25,7 +25,7 @@ const startSinglePlayer = () => {
 }
 
 const goToLobby = () => {
-  router.push({ name: 'lobby' })
+  router.push({ name: 'multiplayerlobby' })
 }
 
 onMounted(async () => {
@@ -100,7 +100,7 @@ onMounted(async () => {
               <CardDescription>Challenge other players</CardDescription>
             </CardHeader>
             <CardContent class="space-y-6">
-              <div v-if="!authStore.user" class="text-center py-4">
+              <div v-if="!authStore.currentUser" class="text-center py-4">
                 <p class="text-xs text-emerald-500 mb-4">Log in for online mode</p>
                 <Button @click="router.push('/login')" variant="outline" class="w-full border-emerald-500 text-emerald-500 hover:bg-emerald-500">
                   Login

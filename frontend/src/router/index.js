@@ -8,8 +8,9 @@ import RegisterPage from '@/pages/register/RegisterPage.vue'
 import ProfilePage from '@/pages/profile/ProfilePage.vue'
 import LaravelPage from '@/pages/testing/LaravelPage.vue'
 import WebsocketsPage from '@/pages/testing/WebsocketsPage.vue'
-// import LobbyPage from '@/pages/game/LobbyPage.vue'
+import MultiplayerLobbyPage from '@/pages/game/MultiplayerLobbyPage.vue'
 import SingleplayerGamePage from '@/pages/game/SingleplayerGamePage.vue'
+import MultiplayerGamePage from '@/pages/game/MultiplayerGamePage.vue'
 
 const routes = [
   { path: '/', name: 'home', component: HomePage },
@@ -41,17 +42,23 @@ const routes = [
   },
 
   //Game
-  // { 
-  //   path: '/lobby', 
-  //   name: 'lobby', 
-  //   component: LobbyPage, 
-  //   meta: { requiresAuth: true } 
-  // },
-  { 
-    path: '/singleplayer/', 
-    name: 'singleplayer', 
-    component: SingleplayerGamePage, 
-    meta: { requiresAuth: false } 
+  {
+    path: '/lobby',
+    name: 'multiplayerlobby',
+    component: MultiplayerLobbyPage,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/multiplayer/:id',
+    name: 'multiplayer',
+    component: MultiplayerGamePage,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/singleplayer/',
+    name: 'singleplayer',
+    component: SingleplayerGamePage,
+    meta: { requiresAuth: false }
   },
 ]
 

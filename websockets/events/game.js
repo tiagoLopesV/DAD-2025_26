@@ -1,29 +1,110 @@
-import { server } from "../server.js";
 import { getUser } from "../state/connection.js"
+import {
+  createGame,
+  getGames,
+  getGame,
+  removeGame,
+  quitGame,
+  startGame,
+  playCard,
+  drawCards,
+  checkForGameComplete,
+  resetMoveTimer
+} from "../state/game.js"
+import { server } from "../server.js"
 
 export const handleGameEvents = (io, socket) => {
 
-  socket.on("join-game", (matchId) => {
-    socket.join(`match-${matchId}`);
-  });
+  // Criar um novo jogo (standalone ou match)
+  socket.on("create-game", (type, variant, stake) => {
+    const user = getUser(socket.id)
+    console.log("Tentativa de criar jogo. User encontrado:", user)
 
-  socket.on("play-card", (data) => {
-    const { matchId, card } = data;
-    
-    // Obtemos o utilizador através do socket.id (Segurança G3)
-    const user = getUser(socket.id);
-
-    if (user) {
-      const roomName = `match-${matchId}`;
-
-      // Emitimos para a sala: quem jogou e qual a carta
-      server.io.to(roomName).emit("card-played", {
-        card: card,
-        userId: user.id,
-        userName: user.name
-      });
-
-      console.log(`${user.name} played ${card.value} of ${card.suit} in match ${matchId}`);
+    if (!user) {
+      console.log("Erro: Socket ID não associado a nenhum utilizador.")
+      return
     }
-  });
-};
+
+    const game = createGame(type, variant, user, stake)
+    socket.join(`game-${game.id}`)
+    console.log(`[Bisca] ${user.name} criou mesa #${game.id} (${type})`)
+
+    io.emit("games", getGames())
+  })
+
+  socket.on("get-games", () => {
+    socket.emit("games", getGames())
+  })
+
+  socket.on("join-game", (gameID) => {
+    const user = getUser(socket.id)
+    if (!user) return
+
+    const game = startGame(gameID, user, io)
+
+    if (game) {
+      socket.join(`game-${gameID}`)
+      io.emit("games", getGames()) // Atualiza lobby (remove a mesa da lista)
+      io.to(`game-${gameID}`).emit("game-change", game)
+    }
+  })
+
+  socket.on("play-card", (gameID, cardID) => {
+    const user = getUser(socket.id)
+    const game = playCard(gameID, user.id, cardID, io)
+
+    if (game) {
+      // Envia o estado com a carta na mesa
+      io.to(`game-${gameID}`).emit("game-change", game)
+
+      // Se a rodada acabou (2 cartas), espera um pouco e limpa
+      if (game.board.length === 2) {
+        setTimeout(() => {
+          triggerNextTurn(gameID)
+        }, 1500)
+      }
+    }
+  })
+
+  socket.on("cancel-game", (gameID) => {
+    const game = getGame(gameID)
+
+    // Regra de segurança: Só cancela se o jogo NÃO começou
+    if (game && !game.started) {
+      removeGame(gameID)
+      console.log(`[Bisca] Mesa #${gameID} cancelada com sucesso.`)
+
+      // Atualiza o lobby para toda a gente
+      io.emit("games", getGames())
+    } else {
+      console.log(`[Bisca] Tentativa inválida de cancelar mesa #${gameID}`)
+    }
+  })
+
+  // Se quiseres implementar o SAIR (Leave) durante o jogo
+  socket.on("leave-game", (gameID) => {
+    const user = getUser(socket.id)
+    if (!user) return
+
+    const game = quitGame(gameID, user.id)
+    if (game) {
+      io.to(`game-${gameID}`).emit("game-change", game)
+      io.emit("games", getGames())
+    }
+  })
+}
+
+// Processa a limpeza da mesa e verifica fim do jogo
+export const triggerNextTurn = (gameID) => {
+  let game = drawCards(gameID)
+  game = checkForGameComplete(gameID)
+
+  server.io.to(`game-${gameID}`).emit("game-change", game)
+
+  // Se o jogo NÃO acabou, temos de reiniciar o timer para o jogador que vai começar a ronda
+  if (!game.complete) {
+    resetMoveTimer(gameID, server.io)
+  } else {
+    console.log(`[Bisca] Jogo #${game.id} terminado.`)
+  }
+}

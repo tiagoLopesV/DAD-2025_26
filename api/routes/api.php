@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\GameController;
+use App\Http\Controllers\GameMatchController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\CoinController;
@@ -30,3 +31,5 @@ Route::middleware('auth:sanctum', 'blocked')->group(function () {
 });
 
 Route::apiResource('games', GameController::class);
+
+Route::apiResource('matches', GameMatchController::class);

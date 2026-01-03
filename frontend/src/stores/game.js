@@ -8,7 +8,7 @@ export const useGameStore = defineStore('game', () => {
   const cardPower = { 'A': 10, '7': 9, 'K': 8, 'J': 7, 'Q': 6, '6': 5, '5': 4, '4': 3, '3': 2, '2': 1 }
 
   // --- ESTADO ---
-  const gameType = ref('3') 
+  const gameType = ref('3') // 3 or 9 cards
   const myHand = ref([])
   const botHand = ref([])
   const cardsOnTable = ref([])
@@ -17,11 +17,15 @@ export const useGameStore = defineStore('game', () => {
   const player1 = ref({ points: 0, marks: 0 })
   const player2 = ref({ points: 0, marks: 0 })
   const myTurn = ref(true)
-  const leaderThisTrick = ref(true) 
+  const leaderThisTrick = ref(true)
   const isResolving = ref(false)
   const lastWinner = ref(null) // 1 = Tu, 2 = BOT
   const gameMode = ref('game') // 'game' ou 'match'
   const isGameComplete = ref(false)
+
+  // --- ESTADO (MULTIPLAYER LOBBY) ---
+  const lobbyGames = ref([]) // Inicializado como array vazio para evitar o erro de .filter()
+  const activeMultiplayerGame = ref(null)
 
   // --- COMPUTED ---
   const isDeckEmpty = computed(() => deck.value.length === 0)
@@ -38,12 +42,12 @@ export const useGameStore = defineStore('game', () => {
     gameMode.value = mode
     const suits = ['hearts', 'diamonds', 'spades', 'clubs']
     const values = ['A', '2', '3', '4', '5', '6', '7', 'J', 'Q', 'K']
-    
+
     let newDeck = []
     suits.forEach(s => values.forEach(v => {
       newDeck.push({ suit: s, value: v, id: `${s}${v}`, flipped: false })
     }))
-    
+
     newDeck.sort(() => Math.random() - 0.5)
     deck.value = newDeck
     trump.value = deck.value[0]
@@ -52,7 +56,7 @@ export const useGameStore = defineStore('game', () => {
     const count = parseInt(gameType.value)
     myHand.value = deck.value.splice(-count).map(c => ({ ...c, flipped: true }))
     botHand.value = deck.value.splice(-count).map(c => ({ ...c, flipped: false }))
-    
+
     player1.value.points = 0
     player2.value.points = 0
     if (mode === 'game') {
@@ -83,7 +87,7 @@ export const useGameStore = defineStore('game', () => {
       const played = myHand.value.splice(index, 1)[0]
       if (cardsOnTable.value.length === 0) leaderThisTrick.value = true
       cardsOnTable.value.push(played)
-      
+
       if (cardsOnTable.value.length === 2) resolveTrick()
       else { myTurn.value = false; playBotMove() }
     }
@@ -113,7 +117,7 @@ export const useGameStore = defineStore('game', () => {
         }
       }
     }
-    
+
     if (cardIndex === -1) cardIndex = 0
 
     const played = botHand.value.splice(cardIndex, 1)[0]
@@ -142,7 +146,7 @@ export const useGameStore = defineStore('game', () => {
 
     let playerWonTrick = leaderThisTrick.value ? firstWins : !firstWins
     const pts = (pointsMap[c1.value] || 0) + (pointsMap[c2.value] || 0)
-    
+
     lastWinner.value = playerWonTrick ? 1 : 2
     await new Promise(r => setTimeout(r, 600)) // Tempo da animação
 
@@ -183,12 +187,10 @@ export const useGameStore = defineStore('game', () => {
     if (gameMode.value === 'game') {
       // Jogo Único: Acaba mal a primeira mão termine
       isGameComplete.value = true
-      // saveGame()
     } else {
       // Modo Match: Só acaba quando alguém chega às 4 marcas
       if (isMatchOver.value) {
         isGameComplete.value = true
-        // saveGame()
       } else {
         toast.info("Preparing next hand...")
         setTimeout(() => prepareNewGame(gameType.value, 'match'), 3000)
@@ -197,28 +199,43 @@ export const useGameStore = defineStore('game', () => {
   }
 
   const isCardPlayable = (card) => {
-  if (!myTurn.value || isResolving.value) return false;
-  
-  // Regra da Fase Final (Deck Vazio)
-  if (isDeckEmpty.value && cardsOnTable.value.length === 1) {
-    const leadCard = cardsOnTable.value[0];
-    const myHandCards = myHand.value;
+    if (!myTurn.value || isResolving.value) return false;
 
-    // Se tens o naipe, és obrigado a jogar o naipe (assistir)
-    if (canFollowSuit(myHandCards, leadCard.suit)) {
-      return card.suit === leadCard.suit;
+    // Regra da Fase Final (Deck Vazio)
+    if (isDeckEmpty.value && cardsOnTable.value.length === 1) {
+      const leadCard = cardsOnTable.value[0];
+      const myHandCards = myHand.value;
+
+      // Se tens o naipe, és obrigado a jogar o naipe (assistir)
+      if (canFollowSuit(myHandCards, leadCard.suit)) {
+        return card.suit === leadCard.suit;
+      }
+
+      // Se NÃO tens o naipe, podes jogar qualquer carta (incluindo trunfo ou balda)
+      return true;
     }
-    
-    // Se NÃO tens o naipe, podes jogar qualquer carta (incluindo trunfo ou balda)
-    return true; 
+
+    return true;
+  };
+
+  // --- AÇÕES (MULTIPLAYER - ADICIONADO) ---
+
+  // Atualiza a lista de jogos do Lobby (chamado pela socketStore)
+  const setLobbyGames = (games) => {
+    lobbyGames.value = games || []
   }
+
+  // Define o jogo multiplayer atual (o que estás a jogar no momento)
+  const setActiveGame = (game) => {
+    activeMultiplayerGame.value = game
+  }
+
   
-  return true; 
-};
 
   return {
-    gameType, myHand, botHand: botHand, cardsOnTable, trump, player1, player2, 
+    gameType, myHand, botHand: botHand, cardsOnTable, trump, player1, player2,
     myTurn, isResolving, isDeckEmpty, deckCount, opponentCardCount, gameMode,
-    isGameComplete, isMatchOver, lastWinner, prepareNewGame, playCard, isCardPlayable
+    isGameComplete, isMatchOver, lastWinner, prepareNewGame, playCard, isCardPlayable,
+    lobbyGames, activeMultiplayerGame, setLobbyGames, setActiveGame
   }
 })
