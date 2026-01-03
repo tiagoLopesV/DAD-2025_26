@@ -87,37 +87,38 @@ export const useSocketStore = defineStore('socket', () => {
   const endMatchIfNeeded = async (game) => {
     if (game.type !== 'match') return
 
-    // Detetar se o jogo foi interrompido por timeout ou desistência
-    // Ajusta 'interrupted' ou 'timeout' conforme o que o teu servidor emite
-    const isAborted = game.status === 'interrupted' || game.status === 'timeout' || game.timeout === true
-    const hasReachedMaxMarks = game.player1.marks >= 4 || game.player2.marks >= 4
+    // 1. Definições claras de fim de Match
+    const isAborted = game.status === 'interrupted' || game.status === 'timeout' || game.reason === 'timeout'
+    const hasReachedMaxMarks = (game.player1.marks >= 4 || game.player2.marks >= 4)
     
-    // O Match termina se alguém chegou às 4 marcas OU se foi abortado
-    const matchFinished = hasReachedMaxMarks || isAborted || game.complete
+    // IMPORTANTE: Aqui removemos o "game.complete" puro, 
+    // porque o "complete" acontece em todas as mãos.
+    const matchFinished = hasReachedMaxMarks || isAborted
 
-    if (!matchFinished) return
-    if (finishedMatches.has(game.id)) return
-
-    finishedMatches.add(game.id)
-    console.log('🏁 Match Terminado:', isAborted ? 'Por Timeout/Desistência' : 'Por Pontuação')
-
-    // 1. Gravar a última ronda (Game)
-    const roundKey = getRoundKey(game)
-    if (!processedRounds.has(roundKey)) {
-      processedRounds.add(roundKey)
-      await saveGame(game, 'Ended')
+    // 2. Gravar a Ronda (Game) sempre que uma mão acaba (mesmo que o match continue)
+    if (game.complete) {
+        const roundKey = getRoundKey(game)
+        if (!processedRounds.has(roundKey)) {
+            processedRounds.add(roundKey)
+            console.log('💾 Ronda intermédia terminada. A gravar Game...', roundKey)
+            await saveGame(game, 'Ended')
+        }
     }
 
-    console.log('Dados para o Laravel:', {
-        id: game.id,
-        status: 'Ended',
-        winner: game.winner // VERIFICA ISTO NA CONSOLA DO BROWSER
-    });
+    // 3. Gravar o Fim do Match (Apenas se terminou mesmo)
+    if (matchFinished && !finishedMatches.has(game.id)) {
+        finishedMatches.add(game.id)
+        
+        console.log('🏁 MATCH ENDED DEFINITIVELY:', {
+            reason: isAborted ? 'Aborted/Timeout' : 'Points Reached',
+            winner: game.winner,
+            marks: `${game.player1.marks} - ${game.player2.marks}`
+        });
 
-    // 2. Gravar o Match (Isto dispara o Payout no Laravel)
-    // GARANTE QUE O WINNER ESTÁ DEFINIDO NO SOCKET SERVER
-    await saveMatch(game, 'Ended')
-  }
+        // Este saveMatch é o que envia o winner_user_id para o Laravel processar o dinheiro
+        await saveMatch(game, 'Ended')
+    }
+}
 
   // ----------------- Game Event Handlers -----------------
   const handleGameEvents = () => {
