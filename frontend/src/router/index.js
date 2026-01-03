@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
-// Pages (unchanged)
+// Pages
 import HomePage from '@/pages/home/HomePage.vue'
 import LoginPage from '@/pages/login/LoginPage.vue'
 import RegisterPage from '@/pages/register/RegisterPage.vue'
@@ -19,11 +19,12 @@ import UserTransactionsPage from '@/pages/profile/UserTransactionsPage.vue'
 const routes = [
   { path: '/', name: 'home', component: HomePage },
 
+  // Guest-only
   { path: '/login', name: 'login', component: LoginPage, meta: { guestOnly: true } },
   { path: '/register', name: 'register', component: RegisterPage, meta: { guestOnly: true } },
 
+  // Authenticated
   { path: '/profile', name: 'profile', component: ProfilePage, meta: { requiresAuth: true } },
-
   {
     path: '/logout',
     name: 'logout',
@@ -35,9 +36,11 @@ const routes = [
     },
   },
 
-  { path: '/leaderboard', component: LeaderboardPage },
-  { path: '/statistics', component: StatisticsPage },
+  // Public
+  { path: '/leaderboard', name: 'leaderboard', component: LeaderboardPage },
+  { path: '/statistics', name: 'statistics', component: StatisticsPage },
 
+  // Admmin stuff
   {
     path: '/admin',
     component: () => import('@/components/layout/AdminLayout.vue'),
@@ -49,9 +52,10 @@ const routes = [
       { path: 'admins', component: () => import('@/pages/admin/CreateAdmin.vue') },
     ],
   },
+  // Authenticated
+  { path: '/history', name: 'history', component: HistoryPage, meta: { requiresAuth: true } },
 
-  { path: '/history', component: HistoryPage, meta: { requiresAuth: true } },
-
+  // Testing
   {
     path: '/testing',
     children: [
@@ -60,26 +64,31 @@ const routes = [
     ],
   },
 
-  {
-    path: '/profile/transactions',
-    name: 'profile-transactions',
-    component: UserTransactionsPage,
-    meta: { requiresAuth: true }
-  },
-
+  //Game
   {
     path: '/lobby',
+    name: 'multiplayerlobby',
     component: MultiplayerLobbyPage,
     meta: { requiresAuth: true },
   },
   {
     path: '/multiplayer/:id',
+    name: 'multiplayer',
     component: MultiplayerGamePage,
     meta: { requiresAuth: true },
   },
   {
-    path: '/singleplayer',
+    path: '/singleplayer/',
+    name: 'singleplayer',
     component: SingleplayerGamePage,
+    meta: { requiresAuth: false }
+  },
+
+   {
+    path: '/profile/transactions',
+    name: 'profile-transactions',
+    component: UserTransactionsPage,
+    meta: { requiresAuth: true }
   },
 ]
 
@@ -88,10 +97,11 @@ const router = createRouter({
   routes,
 })
 
+// Global navigation guard
 router.beforeEach(async (to) => {
   const auth = useAuthStore()
 
-  // Restore user if token exists
+  // If token exists but currentUser not loaded
   if (auth.token && !auth.currentUser) {
     try {
       await auth.fetchCurrentUser()
@@ -101,23 +111,23 @@ router.beforeEach(async (to) => {
     }
   }
 
-  // Blocked users
+  // Blocked users → force logout
   if (auth.currentUser?.blocked) {
     await auth.logout()
     return { name: 'login' }
   }
 
-  // Auth guard
-  if (to.meta.requiresAuth && !auth.token) {
+  // Route requires auth
+  if (to.meta.requiresAuth && !auth.isLoggedIn) {
     return { name: 'login' }
   }
 
-  // Guest-only guard
-  if (to.meta.guestOnly && auth.token) {
+  // Guest-only routes
+  if (to.meta.guestOnly && auth.isLoggedIn) {
     return { name: 'home' }
   }
 
-  // Admin guard
+  // Admin Guard
   if (to.meta.admin && auth.currentUser?.type !== 'A') {
     return { name: 'home' }
   }
