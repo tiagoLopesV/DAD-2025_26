@@ -38,6 +38,8 @@ export const useGameStore = defineStore('game', () => {
 
   // --- AÇÕES ---
   const prepareNewGame = (variant = '3', mode = 'game') => {
+    isGameComplete.value = false
+    
     gameType.value = variant
     gameMode.value = mode
     const suits = ['hearts', 'diamonds', 'spades', 'clubs']
@@ -230,12 +232,27 @@ export const useGameStore = defineStore('game', () => {
     activeMultiplayerGame.value = game
   }
 
-  
+  const resetGameState = () => {
+    isGameComplete.value = false
+    isResolving.value = false
+    myHand.value = []
+    botHand.value = []
+    cardsOnTable.value = []
+    deck.value = []
+    trump.value = null
+    player1.value = { points: 0, marks: 0 }
+    player2.value = { points: 0, marks: 0 }
+    lastWinner.value = null
+    activeMultiplayerGame.value = null
+    console.log("Game state resetado com sucesso.")
+  }
+
+
 
   return {
     gameType, myHand, botHand: botHand, cardsOnTable, trump, player1, player2,
     myTurn, isResolving, isDeckEmpty, deckCount, opponentCardCount, gameMode,
     isGameComplete, isMatchOver, lastWinner, prepareNewGame, playCard, isCardPlayable,
-    lobbyGames, activeMultiplayerGame, setLobbyGames, setActiveGame
+    lobbyGames, activeMultiplayerGame, setLobbyGames, setActiveGame, resetGameState
   }
 })

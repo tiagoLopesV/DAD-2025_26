@@ -49,7 +49,7 @@ const evaluateTrick = (move1, move2, trumpSuit) => {
 }
 
 // --- CORE LOGIC ---
-export const createGame = (type, variant, user, customStake) => { 
+export const createGame = (type, variant, user, customStake) => {
     currentGameID++
     const finalStake = type === 'match' ? (customStake || 3) : 2
     const game = {
@@ -98,7 +98,7 @@ const dealCards = (game) => {
 export const playCard = (gameID, userId, cardId, io) => {
     const game = games.get(gameID)
     if (!game || game.currentPlayer !== userId || game.board.length >= 2) return null
-    
+
     const player = game.player1.id === userId ? game.player1 : game.player2
     const cardIndex = player.hand.findIndex(c => c.id === cardId)
     if (cardIndex === -1) return null
@@ -109,7 +109,7 @@ export const playCard = (gameID, userId, cardId, io) => {
     if (game.deck.length === 0 && game.board.length === 1) {
         const leadCard = game.board[0].card
         const hasMatchingSuit = player.hand.some(c => c.suit === leadCard.suit)
-        if (hasMatchingSuit && selectedCard.suit !== leadCard.suit) return null 
+        if (hasMatchingSuit && selectedCard.suit !== leadCard.suit) return null
     }
 
     const card = player.hand.splice(cardIndex, 1)[0]
@@ -124,7 +124,7 @@ export const playCard = (gameID, userId, cardId, io) => {
     } else {
         game.currentPlayer = game.player1.id === userId ? game.player2.id : game.player1.id
     }
-    
+
     resetMoveTimer(gameID, io) // Reinicia timer após jogada válida
     return game
 }
@@ -147,7 +147,7 @@ export const resetMoveTimer = (gameID, io) => {
     // Se o io não vier, o timer é inútil porque não consegue avisar ninguém
     if (!io) {
         console.error("ERRO CRÍTICO: resetMoveTimer chamado sem 'io'. O timeout não vai funcionar.");
-        return; 
+        return;
     }
 
     if (moveTimeouts.has(gameID)) {
@@ -157,7 +157,7 @@ export const resetMoveTimer = (gameID, io) => {
 
     const timeout = setTimeout(() => {
         handleMoveTimeout(gameID, io);
-    }, 20500); 
+    }, 20500);
 
     moveTimeouts.set(gameID, timeout);
 };
@@ -168,12 +168,14 @@ const handleMoveTimeout = (gameID, io) => {
 
     console.log(`[Timer] Timeout na mesa ${gameID}. Jogador ${game.currentPlayer} perdeu.`);
 
-    // 1. Executa o quitGame para definir o vencedor e marcar complete = true
+    // Atualiza o estado do jogo no servidor
     quitGame(gameID, game.currentPlayer);
 
-    // 2. IMPORTANTE: Envia o estado atualizado para os clientes primeiro
-    // Isso garante que o useSocketStore receba o game.winner
+    // Emite para a sala do jogo
     io.to(`game-${gameID}`).emit("game-change", game);
+    
+    // Atualiza a lista de jogos no lobby (opcional, mas recomendado)
+    io.emit("games", getGames());
 };
 
 export const quitGame = (gameID, quittingUserId) => {
@@ -183,12 +185,31 @@ export const quitGame = (gameID, quittingUserId) => {
     const winner = game.player1.id === quittingUserId ? game.player2 : game.player1
     const loser = game.player1.id === quittingUserId ? game.player1 : game.player2
 
-    // REGRA: Vencedor ganha todas as cartas restantes
+    // --- REGRA: Vencedor ganha todas as cartas restantes ---
     const remainingCards = [...loser.hand, ...winner.hand, ...game.deck]
     winner.points += remainingCards.reduce((sum, c) => sum + (c.points || 0), 0)
-    
+
+    // Limpeza de estado
     winner.hand = []; loser.hand = []; game.deck = []; game.board = []
+    
+    // --- NOVA LÓGICA PARA MATCH ---
+    if (game.type === 'match') {
+        // Calculamos quantas marcas estes pontos valem (Capote, Bandeira, etc)
+        let marksWon = 1;
+        if (winner.points === 120) marksWon = 4;
+        else if (winner.points >= 91) marksWon = 2;
+
+        winner.marks += marksWon;
+
+        // Se após o timeout o vencedor ainda não tiver 4 marcas, 
+        // forçamos para 4 porque o adversário desistiu/caiu (Win por WO)
+        if (winner.marks < 4) {
+            winner.marks = 4;
+        }
+    }
+
     game.complete = true
+    game.status = 'timeout' 
     game.winner = winner.id
     game.reason = 'timeout'
     game.endedAt = new Date()
@@ -196,19 +217,26 @@ export const quitGame = (gameID, quittingUserId) => {
     // Payout
     const payout = game.type === 'standalone' ? 3 : (game.stake * 2) - 1
     game.payoutDetails = { winnerId: winner.id, amount: payout }
-    
-    if (moveTimeouts.has(game.id)) clearTimeout(moveTimeouts.get(game.id))
+
+    if (moveTimeouts.has(game.id)) {
+        clearTimeout(moveTimeouts.get(game.id));
+        moveTimeouts.delete(game.id);
+    }
+
     return game
 }
 
 export const checkForGameComplete = (gameID) => {
     const game = games.get(gameID)
     if (game.deck.length === 0 && game.player1.hand.length === 0 && game.player2.hand.length === 0) {
-        game.complete = true
-        game.endedAt = new Date()
-        if (game.type === 'standalone') calculateStandaloneWinner(game)
-        else processMatchHand(game)
-        if (moveTimeouts.has(game.id)) clearTimeout(moveTimeouts.get(game.id))
+        if (game.type === 'standalone') {
+            game.complete = true
+            game.status = 'finished'
+            game.endedAt = new Date()
+            calculateStandaloneWinner(game)
+        } else {
+            processMatchHand(game)
+        }
     }
     return game
 }
@@ -222,12 +250,12 @@ const calculateStandaloneWinner = (game) => {
         const isP1Winner = game.player1.points > game.player2.points
         game.winner = isP1Winner ? game.player1.id : game.player2.id
         const winnerPoints = isP1Winner ? game.player1.points : game.player2.points
-        
+
         // Regras de Prémio: 61+ pts = 3 moedas | 91+ pts (Capote) = 4 moedas | 120 pts (Bandeira) = 6 moedas
         let amount = 3
         if (winnerPoints === 120) amount = 6
         else if (winnerPoints >= 91) amount = 4
-        
+
         game.payoutDetails = {
             winnerId: game.winner,
             amount: amount
@@ -237,48 +265,38 @@ const calculateStandaloneWinner = (game) => {
 
 // Lógica Específica para Match (Marcas)
 const processMatchHand = (game) => {
-    // 1. Atribuir Marcas baseadas nos pontos
     let marksWon = 0
-    let handWinner = null // 'p1', 'p2' ou null (empate)
-
     if (game.player1.points > 60) {
-        handWinner = 'p1'
-        // 120 = 3 marcas, >=91 = 2 marcas, normal = 1 marca
-        marksWon = game.player1.points === 120 ? 3 : (game.player1.points >= 91 ? 2 : 1)
+        marksWon = game.player1.points === 120 ? 4 : (game.player1.points >= 91 ? 2 : 1)
         game.player1.marks += marksWon
     } else if (game.player2.points > 60) {
-        handWinner = 'p2'
-        marksWon = game.player2.points === 120 ? 3 : (game.player2.points >= 91 ? 2 : 1)
+        marksWon = game.player2.points === 120 ? 4 : (game.player2.points >= 91 ? 2 : 1)
         game.player2.marks += marksWon
     }
-    // Empate (60-60) ninguém ganha marcas
 
-    // 2. Verificar se alguém ganhou o Match (>= 4 marcas)
     if (game.player1.marks >= 4 || game.player2.marks >= 4) {
+        // MATCH FINISHED
         game.complete = true
+        game.status = 'finished' 
         game.endedAt = new Date()
         
-        // Quem tem mais marcas ganha (se ambos passaram de 4 na mesma jogada, quem tem mais leva)
         const isP1MatchWinner = game.player1.marks > game.player2.marks
         game.winner = isP1MatchWinner ? game.player1.id : game.player2.id
         
-        // Prémio do Match: (Stake Total) - 1 moeda de comissão
         const totalPrize = (game.currentStake * 2) - 1
-        
-        game.payoutDetails = {
-            winnerId: game.winner,
-            amount: totalPrize
-        }
+        game.payoutDetails = { winnerId: game.winner, amount: totalPrize }
     } else {
-        // 3. Se ninguém ganhou, prepara a PRÓXIMA RONDA
+        // MATCH CONTINUES
+        game.complete = false 
+        game.status = 'playing'
         startNextHand(game)
     }
 }
 
 const startNextHand = (game) => {
     // 1. Alternar quem começa
-    const nextToStart = game.firstPlayerInHand === game.player1.id 
-        ? game.player2.id 
+    const nextToStart = game.firstPlayerInHand === game.player1.id
+        ? game.player2.id
         : game.player1.id;
 
     game.firstPlayerInHand = nextToStart;

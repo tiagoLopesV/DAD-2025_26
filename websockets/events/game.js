@@ -92,6 +92,24 @@ export const handleGameEvents = (io, socket) => {
       io.emit("games", getGames())
     }
   })
+
+  socket.on("player-timeout", (gameID) => {
+    const user = getUser(socket.id);
+    if (!user) return;
+
+    // Chamamos a função quitGame que já tens e que já limpa o timer
+    const game = quitGame(gameID, user.id);
+
+    if (game) {
+        console.log(`[Timer] Timeout na mesa ${gameID}. Jogador ${user.name} perdeu.`);
+        
+        // Notifica todos na sala que o jogo acabou
+        io.to(`game-${gameID}`).emit("game-change", game);
+        
+        // Atualiza o lobby para remover o jogo da lista
+        io.emit("games", getGames());
+    }
+})
 }
 
 // Processa a limpeza da mesa e verifica fim do jogo
