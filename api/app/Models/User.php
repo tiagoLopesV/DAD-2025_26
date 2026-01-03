@@ -2,69 +2,63 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable, HasApiTokens, SoftDeletes;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
     protected $fillable = [
         'name',
         'email',
         'password',
         'nickname',
-        'type', // P = player A = Admin
+        'type', // P = player, A = Admin
         'photo_avatar_filename',
         'coins_balance',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-            'blocked => boolean',
-        ];
-    }
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+        'blocked' => 'boolean',
+    ];
 
-    public function isAdmin(): bool{
+    public function isAdmin(): bool {
         return $this->type === 'A';
     }
 
-    public function coinTransactions(){
+    public function coinTransactions() {
         return $this->hasMany(CoinTransaction::class);
     }
 
-    
-    public function gamesWon()
-    {
+    public function gamesWon() {
         return $this->hasMany(Game::class, 'winner_user_id');
+    }
+
+    /**
+     * Override authentication to ignore soft-deleted users
+     */
+    public function getAuthIdentifierName()
+    {
+        return 'email';
+    }
+
+    public function newQuery($excludeDeleted = true)
+    {
+        $builder = parent::newQuery($excludeDeleted);
+        if ($excludeDeleted) {
+            $builder->whereNull('deleted_at');
+        }
+        return $builder;
     }
 }

@@ -14,13 +14,6 @@
       <input v-model="payment_reference" placeholder="Reference" />
       <button type="submit">Buy Coins</button>
     </form>
-
-    <h4>Transaction History</h4>
-    <ul>
-      <li v-for="tx in transactions" :key="tx.id">
-        {{ tx.transaction_datetime }} - {{ tx.coins }} coins ({{ tx.type.name }})
-      </li>
-    </ul>
   </div>
 </template>
 

@@ -12,38 +12,50 @@ class ProfileController extends Controller
         return response()->json($request->user());
     }
 
-public function update(Request $request)
-{
-    $user = $request->user();
+    public function update(Request $request)
+    {
+        $user = $request->user();
 
-    $validated = $request->validate([
-        'name' => 'sometimes|string|max:255',
-        'nickname' => 'sometimes|string|max:50|unique:users,nickname,' . $user->id,
-        'email' => 'sometimes|email|unique:users,email,' . $user->id,
-        'password' => 'nullable|string|min:3|confirmed',
-        'photo_avatar' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048', // new: uploaded photo
-    ]);
+        $validated = $request->validate([
+            'name' => 'sometimes|string|max:255',
+            'nickname' => 'sometimes|string|max:50|unique:users,nickname,' . $user->id,
+            'email' => 'sometimes|email|unique:users,email,' . $user->id,
+            'photo_avatar' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
+        ]);
 
-    if (!empty($validated['password'])) {
-        $validated['password'] = Hash::make($validated['password']);
-    } else {
-        unset($validated['password']);
+        if ($request->filled('password')) {
+            $request->validate([
+                'password' => 'required|string|min:3|confirmed',
+            ]);
+
+            $user->password = Hash::make($request->password);
+        }
+
+        if ($request->hasFile('photo_avatar')) {
+            $file = $request->file('photo_avatar');
+            $extension = $file->getClientOriginalExtension() ?: 'png';
+            $filename = str_pad($user->id, 5, '0', STR_PAD_LEFT) . '_' . uniqid() . '.' . $extension;
+            $file->storeAs('public/photos_avatars', $filename);
+            $user->photo_avatar_filename = $filename;
+        } elseif (!$user->photo_avatar_filename) {
+            $user->photo_avatar_filename = 'anonymous.png';
+        }
+
+        $user->update($validated);
+
+        return response()->json([
+            'id' => $user->id,
+            'name' => $user->name,
+            'nickname' => $user->nickname,
+            'email' => $user->email,
+            'type' => $user->type,
+            'blocked' => $user->blocked,
+            'coins_balance' => $user->coins_balance,
+            'custom' => $user->custom,
+            'photo_avatar_filename' => $user->photo_avatar_filename,
+            'photo_avatar_url' => url('storage/photos_avatars/' . $user->photo_avatar_filename),
+        ]);
     }
-
-if ($request->hasFile('photo_avatar')) {
-    $file = $request->file('photo_avatar');
-    $extension = $file->getClientOriginalExtension() ?: 'png'; // fallback
-    $filename = str_pad($user->id, 5, '0', STR_PAD_LEFT) . '_' . uniqid() . '.' . $extension;
-    $file->storeAs('public/photos_avatars', $filename);
-    $validated['photo_avatar_filename'] = $filename;
-} else if (!$user->photo_avatar_filename) {
-    $validated['photo_avatar_filename'] = 'anonymous.png'; // default
-}
-
-    $user->update($validated);
-
-    return response()->json($user);
-}
 
     public function destroy(Request $request)
     {
@@ -51,16 +63,18 @@ if ($request->hasFile('photo_avatar')) {
             'password' => 'required',
         ]);
 
-        if (! Hash::check($request->password, $request->user()->password)) {
+        $user = $request->user();
+
+        if (!Hash::check($request->password, $user->password)) {
             return response()->json(['message' => 'Invalid password'], 403);
         }
 
-        // Admin cannot delete own account
-        if ($request->user()->isAdmin()) {
+        if ($user->isAdmin()) {
             return response()->json(['message' => 'Admins cannot delete their own account'], 403);
         }
 
-        $request->user()->delete();
+        // Soft delete
+        $user->delete();
 
         return response()->json(['message' => 'Account deleted']);
     }

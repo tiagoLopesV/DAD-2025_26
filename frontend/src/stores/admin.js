@@ -29,6 +29,14 @@ export const useAdminStore = defineStore('admin', {
             // Optionally refresh the users list
             await this.fetchUsers()
             return res.data
+        },
+        async fetchGames() {
+            try {
+                const res = await axios.get('/api/admin/games')
+                this.games = res.data
+            } catch (err) {
+                console.error('Failed to fetch games:', err)
+            }
         }
     }
 })
