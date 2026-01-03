@@ -31,11 +31,23 @@ const routes = [
       return { name: 'login' }
     },
   },
-  
+
   // Public
   { path: '/leaderboard', name: 'leaderboard', component: LeaderboardPage },
   { path: '/statistics', name: 'statistics', component: StatisticsPage },
 
+  // Admmin stuff
+  {
+    path: '/admin',
+    component: () => import('@/components/layout/AdminLayout.vue'),
+    meta: { requiresAuth: true, admin: true },
+    children: [
+      { path: 'users', component: () => import('@/pages/admin/AdminUserPage.vue') },
+      { path: 'transactions', component: () => import('@/pages/admin/AdminTransactions.vue') },
+      { path: 'games', component: () => import('@/pages/admin/AdminGames.vue') },
+      { path: 'admins', component: () => import('@/pages/admin/CreateAdmin.vue') },
+    ],
+  },
   // Authenticated
   { path: '/history', name: 'history', component: HistoryPage, meta: { requiresAuth: true } },
 
@@ -81,6 +93,11 @@ router.beforeEach(async (to) => {
 
   // Guest-only routes
   if (to.meta.guestOnly && auth.isLoggedIn) {
+    return { name: 'home' }
+  }
+
+  // Admin Guard
+  if (to.meta.admin && auth.currentUser?.type !== 'A') {
     return { name: 'home' }
   }
 })
