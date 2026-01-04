@@ -1,18 +1,7 @@
-const { Server } = require('socket.io');
-const io = new Server(3000, {
-  cors: { origin: '*' },
-  host: '0.0.0.0'
-});
-
-io.on('connection', socket => {
-  console.log('Client connected', socket.id);
-
-  socket.on('join', (channel) => {
+export const handleCoinEvents = (io, socket) => {
+  socket.on('join_coin_updates', (userId) => {
+    const channel = `user.${userId}.coins`;
     socket.join(channel);
+    console.log(`[Coins] User ${userId} listening for balance updates on ${channel}`);
   });
-
-  // You can listen for Laravel broadcast events via Redis here if using laravel-echo-server
-  // Or handle emitting manually
-});
-
-module.exports = io;
+};

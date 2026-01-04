@@ -1,6 +1,7 @@
 import { Server } from "socket.io";
 import { handleConnectionEvents } from "./events/connection.js";
 import { handleGameEvents } from "./events/game.js"
+import { handleCoinEvents } from "./events/coin.js"
 
 export const server = {
   io: null,
@@ -9,9 +10,8 @@ export const server = {
 export const serverStart = (port) => {
   server.io = new Server(port, {
     cors: {
-      origin: ["http://web-dad-group-42-172.22.21.253.sslip.io"], // frontend URL
+      cors: { origin: '*' },
       methods: ["GET", "POST"],
-      credentials: true,
     },
   })
   server.io.on("connection", (socket) => {
@@ -19,5 +19,6 @@ export const serverStart = (port) => {
 
     handleConnectionEvents(server.io, socket)
     handleGameEvents(server.io, socket)
+    handleCoinEvents(server.io, socket)
   })
 }
