@@ -1,7 +1,8 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import { io } from 'socket.io-client'
-import axios from 'axios'
+//import axios from 'axios'
+import http from './services/http'
 
 import App from './App.vue'
 import router from './router'
@@ -21,7 +22,7 @@ const pinia = createPinia()
 ---------------------------- */
 const token = localStorage.getItem('auth_token')
 if (token) {
-  axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
+  http.defaults.headers.common['Authorization'] = `Bearer ${token}`
 }
 
 /* ---------------------------
@@ -35,7 +36,7 @@ const socket = io(wsConnection, {
 app.provide('socket', socket)
 app.provide('serverBaseURL', `http://${apiDomain}`)
 app.provide('apiBaseURL', `http://${apiDomain}/api`)
-axios.defaults.baseURL = `http://${apiDomain}/api`
+http.defaults.baseURL = `http://${apiDomain}/api`
 
 app.use(pinia)
 app.use(router)

@@ -13,15 +13,15 @@ export const useCoinStore = defineStore('coin', {
   }),
   actions: {
     async fetchBalance() {
-      const res = await http.get('/api/users/me') // assuming user API returns balance
+      const res = await http.get('/users/me') // assuming user API returns balance
       this.balance = res.data.coins_balance
     },
     async fetchTransactions() {
-      const res = await http.get('/api/coins/transactions')
+      const res = await http.get('/coins/transactions')
       this.transactions = res.data
     },
     async purchaseCoins(payload) {
-      const res = await http.post('/api/coins/purchase', payload)
+      const res = await http.post('/coins/purchase', payload)
       this.balance = res.data.balance
       return res.data
     },

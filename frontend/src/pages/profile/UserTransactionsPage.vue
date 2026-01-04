@@ -1,8 +1,9 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import axios from 'axios'
+//import axios from 'axios'
 import { useAuthStore } from '@/stores/auth'
 import { toast } from 'vue-sonner'
+import http from '@/services/http'
 
 const auth = useAuthStore()
 
@@ -16,7 +17,7 @@ const transactions = ref([])
 
 const fetchTransactions = async () => {
     try {
-        const response = await axios.get('/api/coins/transactions')
+        const response = await http.get('/coins/transactions')
         // Filter only for current logged-in user
         transactions.value = response.data.filter(t => t.user_id === auth.currentUser?.id)
     } catch (err) {

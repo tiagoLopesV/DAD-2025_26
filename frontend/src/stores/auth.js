@@ -81,7 +81,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   const updateProfile = async (formData) => {
-    const response = await http.put('/api/me', formData, {
+    const response = await http.put('/me', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
     currentUser.value = formatUser(response.data)
@@ -89,7 +89,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   const deleteAccount = async (password) => {
-    await http.delete('/api/me', { data: { password } })
+    await http.delete('/me', { data: { password } })
     clearToken()
     currentUser.value = undefined
   }
