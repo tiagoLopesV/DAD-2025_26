@@ -33,6 +33,7 @@ const socket = io(wsConnection, {
   transports: ['websocket'],
 })
 
+console.log("Socket instance mainjs:", socket)
 app.provide('socket', socket)
 app.provide('serverBaseURL', `http://${apiDomain}`)
 app.provide('apiBaseURL', `http://${apiDomain}/api`)
