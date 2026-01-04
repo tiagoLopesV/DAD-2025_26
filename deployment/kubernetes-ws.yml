@@ -17,13 +17,13 @@ spec:
       priorityClassName: low-priority
       containers:
         - name: web
-          image: registry-172.22.21.115.sslip.io/dad-group-42/ws:v1.0.0
+          image: registry-172.22.21.115.sslip.io/dad-group-42/ws:v1.0.1
           resources:
             requests:
-              memory: "12Mi"
+              memory: "128Mi"
               cpu: "50m"
             limits:
-              memory: "25Mi"
+              memory: "256Mi"
               cpu: "200m"
 
 ---

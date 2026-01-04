@@ -5,7 +5,9 @@ import { useAPIStore } from './api'
 import { useSocketStore } from './socket'
 
 // Backend base URL
-const API_BASE_URL = 'http://localhost:8000'
+const API_DOMAIN = import.meta.env.VITE_API_DOMAIN
+const WS_CONNECTION = import.meta.env.VITE_WS_CONNECTION
+const API_BASE_URL = `http://${API_DOMAIN}`
 axios.defaults.baseURL = API_BASE_URL
 
 export const useAuthStore = defineStore('auth', () => {

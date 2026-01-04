@@ -2,6 +2,9 @@ import { defineStore } from 'pinia'
 import axios from 'axios'
 import { io } from 'socket.io-client'
 
+const WS_DOMAIN = import.meta.env.VITE_WS_CONNECTION
+
+
 export const useCoinStore = defineStore('coin', {
   state: () => ({
     balance: 0,
@@ -23,8 +26,8 @@ export const useCoinStore = defineStore('coin', {
       return res.data
     },
     connectWebSocket(userId) {
-      this.socket = io('http://localhost:6001') // your WS server
-      this.socket.emit('join', `coins.${userId}`) // join private channel
+      this.socket = io(WS_DOMAIN, { withCredentials: true })
+      this.socket.emit('join', `coins.${userId}`)
 
       this.socket.on('coin-updated', (data) => {
         if (data.userId === userId) {

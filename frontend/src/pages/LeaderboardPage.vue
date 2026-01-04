@@ -79,7 +79,8 @@ onMounted(async () => {
 })
 
 const getAvatar = (filename) => {
-
-    return filename ? `http://localhost:8000/storage/avatars/${filename}` : 'https://placehold.co/40' 
+  return filename
+    ? `${API_BASE_URL}/storage/avatars/${filename}`
+    : 'https://placehold.co/40'
 }
 </script>
