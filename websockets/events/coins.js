@@ -1,5 +1,8 @@
 const { Server } = require('socket.io');
-const io = new Server(6001, { cors: { origin: '*' } });
+const io = new Server(3000, {
+  cors: { origin: '*' },
+  host: '0.0.0.0'
+});
 
 io.on('connection', socket => {
   console.log('Client connected', socket.id);

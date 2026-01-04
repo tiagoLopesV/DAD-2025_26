@@ -9,7 +9,9 @@ export const server = {
 export const serverStart = (port) => {
   server.io = new Server(port, {
     cors: {
-      origin: "*",
+      origin: ["http://web-dad-group-42-172.22.21.253.sslip.io"], // frontend URL
+      methods: ["GET", "POST"],
+      credentials: true,
     },
   })
   server.io.on("connection", (socket) => {

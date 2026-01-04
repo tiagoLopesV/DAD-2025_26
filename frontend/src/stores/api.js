@@ -4,7 +4,8 @@ import axios from 'axios'
 import { inject, ref } from 'vue'
 
 export const useAPIStore = defineStore('api', () => {
-  const API_BASE_URL = inject('apiBaseURL')
+  const API_DOMAIN = import.meta.env.VITE_API_DOMAIN
+  const API_BASE_URL = `http://${API_DOMAIN}`
 
   const token = ref()
   const gameQueryParameters = ref({
@@ -41,14 +42,14 @@ export const useAPIStore = defineStore('api', () => {
   // GAMES
 
   const postGame = async (game) => {
-  try {
-    const response = await axios.post(`${API_BASE_URL}/games`, game)
-    return response
-  } catch (error) {
-    toast.error(`[API] Error saving game - ${error?.response?.data?.message || error.message}`)
-    throw error
+    try {
+      const response = await axios.post(`${API_BASE_URL}/games`, game)
+      return response
+    } catch (error) {
+      toast.error(`[API] Error saving game - ${error?.response?.data?.message || error.message}`)
+      throw error
+    }
   }
-}
 
   const getGames = (resetPagination = false) => {
     if (resetPagination) gameQueryParameters.value.page = 1
@@ -69,14 +70,14 @@ export const useAPIStore = defineStore('api', () => {
   }
 
   const postMatch = async (match) => {
-  try {
-    const response = await axios.post(`${API_BASE_URL}/matches`, match)
-    return response
-  } catch (error) {
-    toast.error(`[API] Error saving match - ${error?.response?.data?.message || error.message}`)
-    throw error
+    try {
+      const response = await axios.post(`${API_BASE_URL}/matches`, match)
+      return response
+    } catch (error) {
+      toast.error(`[API] Error saving match - ${error?.response?.data?.message || error.message}`)
+      throw error
+    }
   }
-}
 
   return {
     token,

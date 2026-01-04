@@ -4,6 +4,9 @@ WORKDIR /app
 COPY package.json  ./
 RUN bun install
 
+RUN bun remove esbuild || true
+RUN bun add -d esbuild@0.25.12
+
 COPY . .
 RUN bun run build
 

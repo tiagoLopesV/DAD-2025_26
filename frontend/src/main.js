@@ -28,13 +28,14 @@ if (token) {
    Socket
 ---------------------------- */
 const socket = io(wsConnection, {
-  withCredentials: true,
+  //withCredentials: true,
   transports: ['websocket'],
 })
 
 app.provide('socket', socket)
 app.provide('serverBaseURL', `http://${apiDomain}`)
 app.provide('apiBaseURL', `http://${apiDomain}/api`)
+axios.defaults.baseURL = `http://${apiDomain}/api`
 
 app.use(pinia)
 app.use(router)
