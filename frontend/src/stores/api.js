@@ -1,11 +1,11 @@
 import { defineStore } from 'pinia'
 import { toast } from 'vue-sonner'
-import axios from 'axios'
-import { inject, ref } from 'vue'
+
+import http from '@/services/http'
+import { ref } from 'vue'
 
 export const useAPIStore = defineStore('api', () => {
-  const API_DOMAIN = import.meta.env.VITE_API_DOMAIN
-  const API_BASE_URL = `http://${API_DOMAIN}`
+
 
   const token = ref()
   const gameQueryParameters = ref({
@@ -20,36 +20,35 @@ export const useAPIStore = defineStore('api', () => {
 
   // LOGIN
   const postLogin = async (credentials) => {
-    const response = await axios.post(`${API_BASE_URL}/login`, credentials)
+    const response = await http.post('/login', credentials)
     token.value = response.data.token
-    axios.defaults.headers.common['Authorization'] = `Bearer ${token.value}`
+    http.defaults.headers.common['Authorization'] = `Bearer ${token.value}`
     return response.data
   }
 
   // LOGOUT
   const postLogout = async () => {
-    await axios.post(`${API_BASE_URL}/logout`)
+    await http.post('/logout')
     token.value = undefined
-    delete axios.defaults.headers.common['Authorization']
+    delete http.defaults.headers.common['Authorization']
   }
 
   // GET AUTH USER
-  const getAuthUser = () => axios.get(`${API_BASE_URL}/users/me`)
-
+  const getAuthUser = () => http.get('/users/me')
   // REGISTER
-  const postRegister = (formData) => axios.post(`${API_BASE_URL}/register`, formData)
+  const postRegister = (formData) => http.post('/register', formData)
 
   // GAMES
 
   const postGame = async (game) => {
-    try {
-      const response = await axios.post(`${API_BASE_URL}/games`, game)
-      return response
-    } catch (error) {
-      toast.error(`[API] Error saving game - ${error?.response?.data?.message || error.message}`)
-      throw error
-    }
+  try {
+    const response = await http.post('/games', game)
+    return response
+  } catch (error) {
+    toast.error(`[API] Error saving game - ${error?.response?.data?.message || error.message}`)
+    throw error
   }
+}
 
   const getGames = (resetPagination = false) => {
     if (resetPagination) gameQueryParameters.value.page = 1
@@ -66,18 +65,18 @@ export const useAPIStore = defineStore('api', () => {
       sort_direction: gameQueryParameters.value.filters.sort_direction,
     }).toString()
 
-    return axios.get(`${API_BASE_URL}/games?${queryParams}`)
+    return http.get(`/games?${queryParams}`)
   }
 
   const postMatch = async (match) => {
-    try {
-      const response = await axios.post(`${API_BASE_URL}/matches`, match)
-      return response
-    } catch (error) {
-      toast.error(`[API] Error saving match - ${error?.response?.data?.message || error.message}`)
-      throw error
-    }
+  try {
+    const response = await http.post('/matches', match)
+    return response
+  } catch (error) {
+    toast.error(`[API] Error saving match - ${error?.response?.data?.message || error.message}`)
+    throw error
   }
+}
 
   return {
     token,
@@ -89,11 +88,10 @@ export const useAPIStore = defineStore('api', () => {
     postMatch,
     gameQueryParameters,
     postRegister,
-    getGlobalLeaderboard: () => axios.get(`${API_BASE_URL}/leaderboard/global`),
-    getPersonalLeaderboard: () => axios.get(`${API_BASE_URL}/leaderboard/personal`),
-    getMyHistory: (page = 1) => axios.get(`${API_BASE_URL}/history/my-games?page=${page}`),
-    getAllHistory: (page = 1) => axios.get(`${API_BASE_URL}/history/all-games?page=${page}`),
-    getPublicStatistics: () => axios.get(`${API_BASE_URL}/statistics/public`),
-
+    getGlobalLeaderboard: () => http.get('/leaderboard/global'),
+    getPersonalLeaderboard: () => http.get('/leaderboard/personal'),
+    getMyHistory: (page = 1) => http.get(`/history/my-games?page=${page}`),
+    getAllHistory: (page = 1) => http.get(`/history/all-games?page=${page}`),
+    getPublicStatistics: () => http.get('/statistics/public'),
   }
 })

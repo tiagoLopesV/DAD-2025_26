@@ -1,14 +1,11 @@
 import { defineStore } from 'pinia'
-import axios from 'axios'
 import { ref, computed } from 'vue'
 import { useAPIStore } from './api'
 import { useSocketStore } from './socket'
+import http from '@/services/http'
 
 // Backend base URL
-const API_DOMAIN = import.meta.env.VITE_API_DOMAIN
-const WS_CONNECTION = import.meta.env.VITE_WS_CONNECTION
-const API_BASE_URL = `http://${API_DOMAIN}`
-axios.defaults.baseURL = API_BASE_URL
+
 
 export const useAuthStore = defineStore('auth', () => {
   const apiStore = useAPIStore()
@@ -29,20 +26,20 @@ export const useAuthStore = defineStore('auth', () => {
   const setToken = (newToken) => {
     token.value = newToken
     localStorage.setItem('auth_token', newToken)
-    axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`
+    http.defaults.headers.common['Authorization'] = `Bearer ${newToken}`
   }
 
   const clearToken = () => {
     token.value = null
     localStorage.removeItem('auth_token')
-    delete axios.defaults.headers.common['Authorization']
+    delete http.defaults.headers.common['Authorization']
   }
 
   // Build full avatar URL
   const buildAvatarUrl = (filename) => {
     return filename
-      ? `${API_BASE_URL}/storage/photos_avatars/${filename}`
-      : `${API_BASE_URL}/storage/photos_avatars/anonymous.png`
+      ? `${http.defaults.baseURL}/storage/photos_avatars/${filename}`
+      : `${http.defaults.baseURL}/storage/photos_avatars/anonymous.png`
   }
 
   const formatUser = (user) => ({
@@ -84,7 +81,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   const updateProfile = async (formData) => {
-    const response = await axios.put('/api/me', formData, {
+    const response = await http.put('/api/me', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
     currentUser.value = formatUser(response.data)
@@ -92,7 +89,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   const deleteAccount = async (password) => {
-    await axios.delete('/api/me', { data: { password } })
+    await http.delete('/api/me', { data: { password } })
     clearToken()
     currentUser.value = undefined
   }
